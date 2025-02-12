@@ -1,0 +1,15 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.osrs.boltmonitor
+productName: OSRS Bolt Monitor
+mac:
+  category: public.app-category.utilities
+  icon: build/icon.icns
+  target: dmg
+  darkModeSupport: true
+files:
+  - filter:
+      - src/**/*
+      - assets/**/*
+electronVersion: 34.1.1

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            width: 300px;
+            background: #2c2c2c;
+            color: white;
+        }
+
+        .bolt-section {
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .bolt-section.loss {
+            background-color: rgba(255, 59, 48, 0.2);
+        }
+
+        .bolt-section.neutral {
+            background-color: rgba(255, 204, 0, 0.2);
+        }
+
+        .bolt-section.profit {
+            background-color: rgba(52, 199, 89, 0.2);
+        }
+
+        h2 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+        }
+
+        .profit-info {
+            font-size: 14px;
+            margin: 4px 0;
+        }
+
+        .total-profit {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .per-item {
+            color: #999;
+        }
+
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .price-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .price-label {
+            color: #999;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-weight: 500;
+        }
+
+        .materials {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div id="rubyBolts" class="bolt-section">
+        <h2>Ruby Dragon Bolts</h2>
+        <div class="profit-info total-profit">Profit: Calculating...</div>
+        <div class="profit-info per-item">Profit per bolt: --</div>
+        
+        <div class="price-grid">
+            <div class="price-item">
+                <div class="price-label">Base Bolts</div>
+                <div class="price-value" id="ruby-base-price">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Enchanted Bolts</div>
+                <div class="price-value" id="ruby-enchanted-price">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Latest Buy Price</div>
+                <div class="price-value" id="ruby-latest-buy">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Latest Sell Price</div>
+                <div class="price-value" id="ruby-latest-sell">--</div>
+            </div>
+        </div>
+        <div class="materials" id="ruby-materials">
+            Materials: Calculating...
+        </div>
+    </div>
+
+    <div id="diamondBolts" class="bolt-section">
+        <h2>Diamond Dragon Bolts</h2>
+        <div class="profit-info total-profit">Profit: Calculating...</div>
+        <div class="profit-info per-item">Profit per bolt: --</div>
+        
+        <div class="price-grid">
+            <div class="price-item">
+                <div class="price-label">Base Bolts</div>
+                <div class="price-value" id="diamond-base-price">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Enchanted Bolts</div>
+                <div class="price-value" id="diamond-enchanted-price">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Latest Buy Price</div>
+                <div class="price-value" id="diamond-latest-buy">--</div>
+            </div>
+            <div class="price-item">
+                <div class="price-label">Latest Sell Price</div>
+                <div class="price-value" id="diamond-latest-sell">--</div>
+            </div>
+        </div>
+        <div class="materials" id="diamond-materials">
+            Materials: Calculating...
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        ipcRenderer.on('update-profits', (event, data) => {
+            const { rubyProfit, diamondProfit } = data;
+            
+            updateBoltSection('ruby', rubyProfit, 75);
+            updateBoltSection('diamond', diamondProfit, 75);
+        });
+
+        function formatGP(number) {
+            return `${number.toLocaleString()} GP`;
+        }
+
+        function updateBoltSection(type, profit, targetMargin) {
+            const section = document.getElementById(`${type}Bolts`);
+            const totalProfitElement = section.querySelector('.total-profit');
+            const perItemElement = section.querySelector('.per-item');
+
+            if (profit) {
+                totalProfitElement.textContent = `Profit: ${formatGP(profit.profit)}`;
+                perItemElement.textContent = `Profit per bolt: ${formatGP(profit.profitPerItem)}`;
+
+                // Update prices
+                document.getElementById(`${type}-base-price`).textContent = formatGP(profit.baseBoltPrice);
+                document.getElementById(`${type}-enchanted-price`).textContent = formatGP(profit.enchantedBoltPrice);
+                document.getElementById(`${type}-latest-buy`).textContent = formatGP(profit.latestBuyPrice || 0);
+                document.getElementById(`${type}-latest-sell`).textContent = formatGP(profit.latestSellPrice || 0);
+
+                // Update materials cost
+                const materialsText = profit.runes.map(rune => 
+                    `${rune.quantity}x ${rune.name} (${formatGP(rune.price)})`
+                ).join(', ');
+                document.getElementById(`${type}-materials`).textContent = `Materials: ${materialsText}`;
+
+                // Update background color based on profit
+                section.classList.remove('loss', 'neutral', 'profit');
+                if (profit.profitPerItem >= targetMargin) {
+                    section.classList.add('profit');
+                } else if (profit.profitPerItem > 0) {
+                    section.classList.add('neutral');
+                } else {
+                    section.classList.add('loss');
+                }
+            }
+        }
+    </script>
+</body>
+</html> 
