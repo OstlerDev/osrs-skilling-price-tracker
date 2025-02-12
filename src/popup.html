@@ -6,12 +6,19 @@
             margin: 0;
             padding: 16px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            width: 300px;
+            width: 600px;
             background: #2c2c2c;
             color: white;
         }
 
+        .bolt-container {
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+        }
+
         .bolt-section {
+            flex: 1;
             padding: 12px;
             margin-bottom: 12px;
             border-radius: 8px;
@@ -79,62 +86,124 @@
             font-size: 12px;
             color: #999;
         }
+
+        .limit-section {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .limit-button {
+            background: #444;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .limit-button:hover {
+            opacity: 1;
+        }
+
+        .limit-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .limit-timer {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .bolt-section.limit-reached {
+            opacity: 0.6;
+        }
+
+        .limit-button.clear {
+            background: #666;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
-    <div id="rubyBolts" class="bolt-section">
-        <h2>Ruby Dragon Bolts</h2>
-        <div class="profit-info total-profit">Profit: Calculating...</div>
-        <div class="profit-info per-item">Profit per bolt: --</div>
-        
-        <div class="price-grid">
-            <div class="price-item">
-                <div class="price-label">Base Bolts</div>
-                <div class="price-value" id="ruby-base-price">--</div>
+    <div class="bolt-container">
+        <div id="rubyBolts" class="bolt-section">
+            <h2>Ruby Dragon Bolts</h2>
+            <div class="profit-info total-profit">Profit: Calculating...</div>
+            <div class="profit-info per-item">Profit per bolt: --</div>
+            
+            <div class="price-grid">
+                <div class="price-item">
+                    <div class="price-label">Base Bolts</div>
+                    <div class="price-value" id="ruby-base-price">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Enchanted Bolts</div>
+                    <div class="price-value" id="ruby-enchanted-price">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Latest Buy Price</div>
+                    <div class="price-value" id="ruby-latest-buy">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Latest Sell Price</div>
+                    <div class="price-value" id="ruby-latest-sell">--</div>
+                </div>
             </div>
-            <div class="price-item">
-                <div class="price-label">Enchanted Bolts</div>
-                <div class="price-value" id="ruby-enchanted-price">--</div>
+            <div class="materials" id="ruby-materials">
+                Materials: Calculating...
             </div>
-            <div class="price-item">
-                <div class="price-label">Latest Buy Price</div>
-                <div class="price-value" id="ruby-latest-buy">--</div>
-            </div>
-            <div class="price-item">
-                <div class="price-label">Latest Sell Price</div>
-                <div class="price-value" id="ruby-latest-sell">--</div>
+            <div class="limit-section">
+                <button class="limit-button" onclick="setLimit('ruby')" id="ruby-limit-btn">
+                    Set Purchase Limit
+                </button>
+                <button class="limit-button clear" onclick="clearLimit('ruby')" id="ruby-clear-btn" style="display: none;">
+                    Clear Limit
+                </button>
+                <div class="limit-timer" id="ruby-limit-timer"></div>
             </div>
         </div>
-        <div class="materials" id="ruby-materials">
-            Materials: Calculating...
-        </div>
-    </div>
 
-    <div id="diamondBolts" class="bolt-section">
-        <h2>Diamond Dragon Bolts</h2>
-        <div class="profit-info total-profit">Profit: Calculating...</div>
-        <div class="profit-info per-item">Profit per bolt: --</div>
-        
-        <div class="price-grid">
-            <div class="price-item">
-                <div class="price-label">Base Bolts</div>
-                <div class="price-value" id="diamond-base-price">--</div>
+        <div id="diamondBolts" class="bolt-section">
+            <h2>Diamond Dragon Bolts</h2>
+            <div class="profit-info total-profit">Profit: Calculating...</div>
+            <div class="profit-info per-item">Profit per bolt: --</div>
+            
+            <div class="price-grid">
+                <div class="price-item">
+                    <div class="price-label">Base Bolts</div>
+                    <div class="price-value" id="diamond-base-price">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Enchanted Bolts</div>
+                    <div class="price-value" id="diamond-enchanted-price">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Latest Buy Price</div>
+                    <div class="price-value" id="diamond-latest-buy">--</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Latest Sell Price</div>
+                    <div class="price-value" id="diamond-latest-sell">--</div>
+                </div>
             </div>
-            <div class="price-item">
-                <div class="price-label">Enchanted Bolts</div>
-                <div class="price-value" id="diamond-enchanted-price">--</div>
+            <div class="materials" id="diamond-materials">
+                Materials: Calculating...
             </div>
-            <div class="price-item">
-                <div class="price-label">Latest Buy Price</div>
-                <div class="price-value" id="diamond-latest-buy">--</div>
+            <div class="limit-section">
+                <button class="limit-button" onclick="setLimit('diamond')" id="diamond-limit-btn">
+                    Set Purchase Limit
+                </button>
+                <button class="limit-button clear" onclick="clearLimit('diamond')" id="diamond-clear-btn" style="display: none;">
+                    Clear Limit
+                </button>
+                <div class="limit-timer" id="diamond-limit-timer"></div>
             </div>
-            <div class="price-item">
-                <div class="price-label">Latest Sell Price</div>
-                <div class="price-value" id="diamond-latest-sell">--</div>
-            </div>
-        </div>
-        <div class="materials" id="diamond-materials">
-            Materials: Calculating...
         </div>
     </div>
 
@@ -146,6 +215,13 @@
             
             updateBoltSection('ruby', rubyProfit, 75);
             updateBoltSection('diamond', diamondProfit, 75);
+            
+            if (data.rubyProfit) {
+                updateLimitUI('ruby', data.rubyProfit);
+            }
+            if (data.diamondProfit) {
+                updateLimitUI('diamond', data.diamondProfit);
+            }
         });
 
         function formatGP(number) {
@@ -184,6 +260,70 @@
                 }
             }
         }
+
+        function setLimit(boltType) {
+            ipcRenderer.send('set-purchase-limit', boltType);
+        }
+
+        function clearLimit(boltType) {
+            ipcRenderer.send('clear-purchase-limit', boltType);
+        }
+
+        function formatTimeRemaining(resetTime) {
+            const remaining = resetTime - Date.now();
+            if (remaining <= 0) return '';
+            
+            const hours = Math.floor(remaining / (60 * 60 * 1000));
+            const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+            const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+            
+            return `Available in ${hours || ''}${hours > 0 ? 'h ' : ''}${minutes || ''}${minutes > 0 ? 'm ' : ''}${seconds}s`;
+        }
+
+        function updateLimitUI(type, data) {
+            const section = document.getElementById(`${type}Bolts`);
+            const button = document.getElementById(`${type}-limit-btn`);
+            const clearButton = document.getElementById(`${type}-clear-btn`);
+            const timer = document.getElementById(`${type}-limit-timer`);
+            
+            if (data.limitReached) {
+                section.classList.add('limit-reached');
+                button.disabled = true;
+                clearButton.style.display = 'inline-block';
+                
+                // Start timer updates
+                if (!timer.interval) {
+                    timer.interval = setInterval(() => {
+                        timer.textContent = formatTimeRemaining(data.resetTime);
+                        if (Date.now() >= data.resetTime) {
+                            clearInterval(timer.interval);
+                            timer.interval = null;
+                        }
+                    }, 1000);
+                }
+            } else {
+                section.classList.remove('limit-reached');
+                button.disabled = false;
+                clearButton.style.display = 'none';
+                timer.textContent = '';
+                
+                // Clear interval if exists
+                if (timer.interval) {
+                    clearInterval(timer.interval);
+                    timer.interval = null;
+                }
+            }
+        }
+
+        // Clean up intervals when window is closed
+        window.addEventListener('beforeunload', () => {
+            ['ruby', 'diamond'].forEach(type => {
+                const timer = document.getElementById(`${type}-limit-timer`);
+                if (timer.interval) {
+                    clearInterval(timer.interval);
+                }
+            });
+        });
     </script>
 </body>
 </html> 

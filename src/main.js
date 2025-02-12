@@ -4,6 +4,7 @@ const notifier = require('node-notifier');
 const Logger = require('./Logger');
 const PriceHistoryManager = require('./PriceHistoryManager');
 const EnchantingMonitor = require('./EnchantingMonitor');
+const fs = require('fs');
 
 class MenuBarApp {
     constructor() {
@@ -37,9 +38,47 @@ class MenuBarApp {
         
         this.popupWindow = null;
         this.tray = null;
-        this.checkInterval = 5000; // Check every 5 seconds
+        this.checkInterval = 60000; // Check every 1 minute
         this.lastNotificationTime = 0;
         this.NOTIFICATION_COOLDOWN = 300000; // 5 minutes
+        
+        this.limitStorePath = path.join(app.getPath('userData'), 'limits.json');
+        this.purchaseLimits = this.loadLimits() || {
+            ruby: {
+                limitReached: false,
+                resetTime: null
+            },
+            diamond: {
+                limitReached: false,
+                resetTime: null
+            }
+        };
+        
+        // Restore timers for existing limits
+        for (const [boltType, limit] of Object.entries(this.purchaseLimits)) {
+            if (limit.limitReached && limit.resetTime) {
+                const remaining = limit.resetTime - Date.now();
+                if (remaining > 0) {
+                    setTimeout(() => {
+                        this.clearPurchaseLimit(boltType);
+                    }, remaining);
+                } else {
+                    this.clearPurchaseLimit(boltType);
+                }
+            }
+        }
+        
+        // 4 hours in milliseconds
+        this.LIMIT_COOLDOWN = 4 * 60 * 60 * 1000;
+
+        // Set up IPC listeners
+        ipcMain.on('set-purchase-limit', (event, boltType) => {
+            this.setPurchaseLimit(boltType);
+        });
+        
+        ipcMain.on('clear-purchase-limit', (event, boltType) => {
+            this.clearPurchaseLimit(boltType);
+        });
     }
 
     async start() {
@@ -106,8 +145,8 @@ class MenuBarApp {
     showPopupWindow(bounds) {
         if (!this.popupWindow) {
             this.popupWindow = new BrowserWindow({
-                width: 335,
-                height: 555,
+                width: 635,
+                height: 346,
                 show: false,
                 frame: false,
                 fullscreenable: false,
@@ -153,7 +192,9 @@ class MenuBarApp {
                     quantity: Number(rune.quantity || 0),
                     price: Number(rune.price || 0),
                     name: String(this.getRuneName(rune.id))
-                }))
+                })),
+                limitReached: this.purchaseLimits.ruby.limitReached,
+                resetTime: this.purchaseLimits.ruby.resetTime
             } : null;
 
             const baseDiamondPricing = await this.diamondBoltMonitor.trackers.baseItem.getLatestPrice();
@@ -169,7 +210,9 @@ class MenuBarApp {
                     quantity: Number(rune.quantity || 0),
                     price: Number(rune.price || 0),
                     name: String(this.getRuneName(rune.id))
-                }))
+                })),
+                limitReached: this.purchaseLimits.diamond.limitReached,
+                resetTime: this.purchaseLimits.diamond.resetTime
             } : null;
 
             // Log the data before sending
@@ -203,21 +246,35 @@ class MenuBarApp {
             this.rubyBoltMonitor.lastProfit = rubyProfit;
             this.diamondBoltMonitor.lastProfit = diamondProfit;
 
-            const isProfitable = this.determineIsProfitable(rubyProfit, diamondProfit);
-            this.logger.info(`Ruby Bolts: ${rubyProfit.profit.toLocaleString()} GP (${rubyProfit.profitPerItem.toLocaleString()} GP/bolt)`);
-            this.logger.info(`Diamond Bolts: ${diamondProfit.profit.toLocaleString()} GP (${diamondProfit.profitPerItem.toLocaleString()} GP/bolt)`);
-            this.logger.info(`Is Profitable: ${isProfitable}`);
+            // Check if both limits are reached
+            const bothLimitsReached = this.purchaseLimits.ruby.limitReached && 
+                                    this.purchaseLimits.diamond.limitReached;
 
-            if (isProfitable) {
-                this.logger.info('Profitable opportunity detected');
-                this.sendProfitNotification(rubyProfit, diamondProfit);
-                this.updateTray('profitable');
-            } else if (rubyProfit.profit < 0 && diamondProfit.profit < 0) {
-                // detected loss
-                this.updateTray('loss');
+            if (bothLimitsReached) {
+                this.updateTray('limit');
             } else {
-                // detected neutral
-                this.updateTray('default');
+                // Check profitability for non-limited bolts
+                const rubyAvailable = !this.purchaseLimits.ruby.limitReached;
+                const diamondAvailable = !this.purchaseLimits.diamond.limitReached;
+                
+                const rubyProfitable = rubyAvailable && rubyProfit.profitPerItem >= this.rubyBoltMonitor.config.targetMargin;
+                const diamondProfitable = diamondAvailable && diamondProfit.profitPerItem >= this.rubyBoltMonitor.config.targetMargin;
+                
+                const rubyNeutral = rubyAvailable && rubyProfit.profitPerItem > 0;
+                const diamondNeutral = diamondAvailable && diamondProfit.profitPerItem > 0;
+                
+                const rubyLoss = rubyAvailable && rubyProfit.profitPerItem <= 0;
+                const diamondLoss = diamondAvailable && diamondProfit.profitPerItem <= 0;
+
+                // Apply priority rules
+                if (rubyProfitable || diamondProfitable) {
+                    this.updateTray('profitable');
+                    this.sendProfitNotification(rubyProfit, diamondProfit);
+                } else if (rubyNeutral || diamondNeutral) {
+                    this.updateTray('default'); // neutral state
+                } else if (rubyLoss || diamondLoss) {
+                    this.updateTray('loss');
+                }
             }
 
             // Update the popup window if it's visible
@@ -226,16 +283,6 @@ class MenuBarApp {
             this.logger.error('Error checking profitability:', error);
             this.updateTray('error');
         }
-    }
-
-    determineIsProfitable(rubyProfit, diamondProfit) {
-        if (!rubyProfit && !diamondProfit) return false;
-        
-        // Check if either type of bolt is profitable
-        const rubyProfitable = rubyProfit && rubyProfit.profitPerItem >= this.rubyBoltMonitor.config.targetMargin;
-        const diamondProfitable = diamondProfit && diamondProfit.profitPerItem >= this.diamondBoltMonitor.config.targetMargin;
-        
-        return rubyProfitable || diamondProfitable;
     }
 
     updateTray(iconStatus) {
@@ -265,6 +312,53 @@ class MenuBarApp {
             }
             this.lastNotificationTime = now;
         }
+    }
+
+    loadLimits() {
+        try {
+            if (fs.existsSync(this.limitStorePath)) {
+                const data = fs.readFileSync(this.limitStorePath, 'utf8');
+                return JSON.parse(data);
+            }
+        } catch (error) {
+            this.logger.error('Error loading limits:', error);
+        }
+        return null;
+    }
+
+    saveLimits() {
+        try {
+            fs.writeFileSync(this.limitStorePath, JSON.stringify(this.purchaseLimits));
+        } catch (error) {
+            this.logger.error('Error saving limits:', error);
+        }
+    }
+
+    setPurchaseLimit(boltType) {
+        this.purchaseLimits[boltType].limitReached = true;
+        this.purchaseLimits[boltType].resetTime = Date.now() + this.LIMIT_COOLDOWN;
+        
+        // Save limits
+        this.saveLimits();
+        
+        // Schedule automatic reset
+        setTimeout(() => {
+            this.clearPurchaseLimit(boltType);
+        }, this.LIMIT_COOLDOWN);
+        
+        // Immediately update icon and UI
+        this.checkProfitability();
+    }
+
+    clearPurchaseLimit(boltType) {
+        this.purchaseLimits[boltType].limitReached = false;
+        this.purchaseLimits[boltType].resetTime = null;
+        
+        // Save limits
+        this.saveLimits();
+        
+        // Update UI and icon
+        this.checkProfitability();
     }
 }
 
