@@ -1,6 +1,29 @@
 # OSRS Bolt Monitor
 
-This is an Electron-based desktop application that monitors the Old School RuneScape (OSRS) Grand Exchange market to detect profitable bolt enchanting opportunities. 
+Maximize your Old School RuneScape profits with real-time bolt enchanting market analysis. This lightweight menu bar application helps you identify profitable enchanting opportunities without constantly checking prices or doing mental math.
+
+## Why Use This?
+
+Bolt enchanting can be one of OSRS's most profitable skilling methods, often yielding 500k-2m GP per hour. However, its profitability fluctuates wildly based on market conditions, and calculating real profits means tracking multiple items:
+
+- Base bolt prices (Ruby & Diamond Dragon Bolts)
+- Enchanted bolt prices
+- Rune costs (Cosmic, Blood, and Law runes)
+- Grand Exchange purchase limits
+- Market volatility
+
+This tool does all the heavy lifting for you:
+- Monitors prices in real-time
+- Calculates exact profit margins
+- Tracks your GE purchase limits
+- Notifies you of profitable opportunities
+- Shows everything at a glance in your menu bar
+
+Perfect for players who want to:
+- Make consistent profits from skilling
+- Optimize their enchanting sessions
+- Track market opportunities passively
+- Avoid loss-making market conditions
 
 ## Features
 
