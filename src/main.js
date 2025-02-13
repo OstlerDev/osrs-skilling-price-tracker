@@ -78,6 +78,7 @@ class MenuBarApp {
         this.popupWindow = null;
         this.tray = null;
         this.lastNotificationTime = 0;
+        this.lastUpdateTime = 0;
     }
 
     /**
@@ -280,7 +281,8 @@ class MenuBarApp {
             // Send the data
             this.popupWindow.webContents.send('update-profits', {
                 rubyProfit: rubyData,
-                diamondProfit: diamondData
+                diamondProfit: diamondData,
+                lastUpdateTime: this.lastUpdateTime
             });
         } catch (error) {
             this.logger.error('Error updating popup window:', error);
@@ -289,12 +291,18 @@ class MenuBarApp {
 
     async checkProfitability() {
         try {
+            // Signal that we're starting an update
+            if (this.popupWindow && !this.popupWindow.isDestroyed()) {
+                this.popupWindow.webContents.send('updating-prices');
+            }
+
             const rubyProfit = await this.rubyBoltMonitor.calculateCurrentProfit();
             const diamondProfit = await this.diamondBoltMonitor.calculateCurrentProfit();
 
-            // Store the last profit values
+            // Store the last profit values and update time
             this.rubyBoltMonitor.lastProfit = rubyProfit;
             this.diamondBoltMonitor.lastProfit = diamondProfit;
+            this.lastUpdateTime = Date.now();
 
             // Check if both limits are reached
             const bothLimitsReached = this.purchaseLimits.ruby.limitReached && 
@@ -341,7 +349,7 @@ class MenuBarApp {
             await this.updatePopupWindow();
         } catch (error) {
             this.logger.error('Error checking profitability:', error);
-            this.updateTray(ICONS.ERROR);
+            this.handlePriceError(error, 'profitability-check');
         }
     }
 

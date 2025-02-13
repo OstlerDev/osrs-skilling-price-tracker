@@ -9,6 +9,7 @@
             width: 600px;
             background: #2c2c2c;
             color: white;
+            position: relative;
         }
 
         .bolt-container {
@@ -128,6 +129,48 @@
             background: #666;
             margin-left: 8px;
         }
+
+        .last-updated {
+            text-align: right;
+            font-size: 11px;
+            color: #666;
+            padding: 8px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .last-updated.stale {
+            color: #ff6b6b;
+        }
+
+        .refresh-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4cd964;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .refresh-indicator.updating {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -207,6 +250,11 @@
         </div>
     </div>
 
+    <div class="last-updated" id="lastUpdated">
+        <span class="refresh-indicator" id="refreshIndicator"></span>
+        <span id="lastUpdatedText">Checking...</span>
+    </div>
+
     <script>
         const { ipcRenderer } = require('electron');
         
@@ -222,6 +270,9 @@
             if (data.diamondProfit) {
                 updateLimitUI('diamond', data.diamondProfit);
             }
+            
+            updateTimestamp(data.lastUpdateTime);
+            startLiveUpdates(data.lastUpdateTime);
         });
 
         function formatGP(number) {
@@ -323,6 +374,71 @@
                     clearInterval(timer.interval);
                 }
             });
+        });
+
+        function formatRelativeTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            if (seconds < 5) {
+                return 'just now';
+            }
+
+            // Format in the same style as countdown timer
+            let timeString = '';
+            
+            if (hours > 0) {
+                timeString += `${hours}h`;
+            }
+            if (minutes % 60 > 0 || (hours > 0 && seconds % 60 > 0)) {
+                timeString += `${minutes % 60}m`;
+            }
+            if (seconds % 60 > 0 || timeString === '') {
+                timeString += `${seconds % 60}s`;
+            }
+
+            return timeString + ' ago';
+        }
+
+        function updateTimestamp(timestamp) {
+            const lastUpdated = document.getElementById('lastUpdated');
+            const lastUpdatedText = document.getElementById('lastUpdatedText');
+            const refreshIndicator = document.getElementById('refreshIndicator');
+            
+            // Update the timestamp text
+            lastUpdatedText.textContent = `Updated ${formatRelativeTime(timestamp)}`;
+            
+            // Check if data is stale (over 5 minutes old)
+            const isStale = Date.now() - timestamp > 5 * 60 * 1000;
+            lastUpdated.classList.toggle('stale', isStale);
+            
+            // Update refresh indicator
+            refreshIndicator.classList.remove('updating');
+        }
+
+        // Add live updates for the relative time
+        let updateInterval;
+        function startLiveUpdates(timestamp) {
+            if (updateInterval) clearInterval(updateInterval);
+            
+            updateInterval = setInterval(() => {
+                const lastUpdatedText = document.getElementById('lastUpdatedText');
+                lastUpdatedText.textContent = `Updated ${formatRelativeTime(timestamp)}`;
+            }, 1000);
+        }
+
+        // Clean up interval when window is closed
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) clearInterval(updateInterval);
+        });
+
+        ipcRenderer.on('updating-prices', () => {
+            const refreshIndicator = document.getElementById('refreshIndicator');
+            refreshIndicator.classList.add('updating');
         });
     </script>
 </body>
