@@ -14,6 +14,7 @@
 
         .bolt-container {
             display: flex;
+            margin-top: 14px;
             gap: 16px;
             justify-content: space-between;
         }
@@ -136,7 +137,7 @@
             color: #666;
             padding: 8px;
             position: absolute;
-            bottom: 0;
+            top: 0;
             right: 0;
             display: flex;
             align-items: center;
@@ -154,10 +155,12 @@
             background: #4cd964;
             display: inline-block;
             margin-right: 4px;
+            opacity: 0.3;
         }
 
-        .refresh-indicator.updating {
-            animation: pulse 2s infinite;
+        .refresh-indicator.active {
+            opacity: 1;
+            animation: pulse 0.2s 2;
         }
 
         @keyframes pulse {
@@ -190,11 +193,11 @@
                     <div class="price-value" id="ruby-enchanted-price">--</div>
                 </div>
                 <div class="price-item">
-                    <div class="price-label">Latest Buy Price</div>
+                    <div class="price-label">Latest Instant Buy</div>
                     <div class="price-value" id="ruby-latest-buy">--</div>
                 </div>
                 <div class="price-item">
-                    <div class="price-label">Latest Sell Price</div>
+                    <div class="price-label">Latest Instant Sell</div>
                     <div class="price-value" id="ruby-latest-sell">--</div>
                 </div>
             </div>
@@ -227,11 +230,11 @@
                     <div class="price-value" id="diamond-enchanted-price">--</div>
                 </div>
                 <div class="price-item">
-                    <div class="price-label">Latest Buy Price</div>
+                    <div class="price-label">Latest Instant Buy</div>
                     <div class="price-value" id="diamond-latest-buy">--</div>
                 </div>
                 <div class="price-item">
-                    <div class="price-label">Latest Sell Price</div>
+                    <div class="price-label">Latest Instant Sell</div>
                     <div class="price-value" id="diamond-latest-sell">--</div>
                 </div>
             </div>
@@ -384,7 +387,7 @@
             const minutes = Math.floor(seconds / 60);
             const hours = Math.floor(minutes / 60);
 
-            if (seconds < 5) {
+            if (seconds < 2) {
                 return 'just now';
             }
 
@@ -409,15 +412,18 @@
             const lastUpdatedText = document.getElementById('lastUpdatedText');
             const refreshIndicator = document.getElementById('refreshIndicator');
             
+            const timeDiff = Date.now() - timestamp;
+            const isJustNow = timeDiff < 3000; // 3 seconds
+            
             // Update the timestamp text
             lastUpdatedText.textContent = `Updated ${formatRelativeTime(timestamp)}`;
             
             // Check if data is stale (over 5 minutes old)
-            const isStale = Date.now() - timestamp > 5 * 60 * 1000;
+            const isStale = timeDiff > 5 * 60 * 1000;
             lastUpdated.classList.toggle('stale', isStale);
             
             // Update refresh indicator
-            refreshIndicator.classList.remove('updating');
+            refreshIndicator.classList.toggle('active', isJustNow);
         }
 
         // Add live updates for the relative time
@@ -438,7 +444,7 @@
 
         ipcRenderer.on('updating-prices', () => {
             const refreshIndicator = document.getElementById('refreshIndicator');
-            refreshIndicator.classList.add('updating');
+            refreshIndicator.classList.add('active');
         });
     </script>
 </body>

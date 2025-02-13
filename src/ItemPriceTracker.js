@@ -8,7 +8,8 @@ class ItemPriceTracker {
         this.logger = logger;
         this.api = new OSRSPriceAPI();
         this.registry = new ItemRegistry();
-        this.updateInterval = 300000; // 5 minutes
+        this.updateInterval = 60000; // 1 minute
+        this.lastUpdated = null;
         this.timeSteps = ['5m', '1h', '6h', '24h'];
         this.latestPrice = null;
     }
@@ -30,6 +31,7 @@ class ItemPriceTracker {
     startUpdates() {
         setInterval(async () => {
             await this.updateTimeSeries('5m');
+            await this.updateLatestPrice();
         }, this.updateInterval);
     }
 
@@ -39,6 +41,7 @@ class ItemPriceTracker {
         if (data) {
             this.logger.info(`Loaded ${data.length} ${timeStep} price points for ${itemName}`);
             await this.priceHistory.recordTimeSeriesData(this.itemId, timeStep, data);
+            this.lastUpdated = Date.now();
         }
     }
 
@@ -66,6 +69,7 @@ class ItemPriceTracker {
                 }
 
                 this.latestPrice = latestPrice;
+                this.lastUpdated = Date.now();
                 this.logger.debug(`Updated latest price for ${itemName}: High=${latestPrice.high?.toLocaleString() || 'N/A'} GP, Low=${latestPrice.low?.toLocaleString() || 'N/A'} GP`);
             } else {
                 this.logger.warn(`No price data available for ${itemName}`);

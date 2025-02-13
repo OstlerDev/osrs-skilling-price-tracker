@@ -84,9 +84,13 @@ class MenuBarApp {
     /**
      * Initialize price monitors for different bolt types
      */
-    initializeMonitors() {
+    async initializeMonitors() {
         this.rubyBoltMonitor = new EnchantingMonitor(BOLT_CONFIGS.ruby, this.priceHistory);
         this.diamondBoltMonitor = new EnchantingMonitor(BOLT_CONFIGS.diamond, this.priceHistory);
+        await Promise.all([
+            this.rubyBoltMonitor.initialize(),
+            this.diamondBoltMonitor.initialize()
+        ]);
     }
 
     /**
@@ -206,7 +210,7 @@ class MenuBarApp {
         if (!this.popupWindow) {
             this.popupWindow = new BrowserWindow({
                 width: 635,
-                height: 346,
+                height: 360,
                 show: false,
                 frame: false,
                 fullscreenable: false,
@@ -282,7 +286,7 @@ class MenuBarApp {
             this.popupWindow.webContents.send('update-profits', {
                 rubyProfit: rubyData,
                 diamondProfit: diamondData,
-                lastUpdateTime: this.lastUpdateTime
+                lastUpdateTime: this.diamondBoltMonitor.trackers.baseItem.lastUpdated
             });
         } catch (error) {
             this.logger.error('Error updating popup window:', error);
