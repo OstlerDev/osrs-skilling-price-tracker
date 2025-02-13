@@ -6,72 +6,121 @@ const PriceHistoryManager = require('./PriceHistoryManager');
 const EnchantingMonitor = require('./EnchantingMonitor');
 const fs = require('fs');
 
+// Constants
+const ICONS = {
+    DEFAULT: 'icon-default.png',
+    PROFITHIGH: 'icon-profit-high.png',
+    PROFITMEDIUM: 'icon-profit-medium.png',
+    PROFITLOW: 'icon-profit-low.png',
+    LOSS: 'icon-loss.png',
+    LIMIT: 'icon-limit.png',
+    ERROR: 'icon-error.png',
+    NOTIFICATION: 'icon-notification.png'
+};
+
+const INTERVALS = {
+    CHECK: 60000,           // 1 minute
+    NOTIFICATION: 300000,   // 5 minutes
+    LIMIT: 4 * 60 * 60 * 1000  // 4 hours
+};
+
+const RUNE_NAMES = {
+    564: 'Cosmic Rune',
+    565: 'Blood Rune',
+    563: 'Law Rune'
+};
+
+const BOLT_CONFIGS = {
+    ruby: {
+        baseItemId: 21967,      // Ruby Dragon Bolts
+        enchantedItemId: 21944, // Ruby Dragon Bolts (e)
+        batchSize: 11000,
+        targetMargin: 75,
+        runes: [
+            { id: 564, price: 130, quantity: 1100 },  // Cosmic Runes
+            { id: 565, price: 240, quantity: 1100 }   // Blood Runes
+        ]
+    },
+    diamond: {
+        baseItemId: 21969,      // Diamond Dragon Bolts
+        enchantedItemId: 21946, // Diamond Dragon Bolts (e)
+        batchSize: 11000,
+        targetMargin: 75,
+        runes: [
+            { id: 564, price: 130, quantity: 1100 },  // Cosmic Runes
+            { id: 563, price: 128, quantity: 2200 }   // Law Runes
+        ]
+    }
+};
+
+/**
+ * Manages the menu bar application for OSRS Bolt Monitor
+ */
 class MenuBarApp {
     constructor() {
-        // Hide dock icon
+        this.initializeApp();
+        this.initializeMonitors();
+        this.initializeLimits();
+        this.setupIPCListeners();
+    }
+
+    /**
+     * Initialize core application settings
+     */
+    initializeApp() {
         if (process.platform === 'darwin') {
             app.dock.hide();
         }
         
         this.logger = new Logger({ debug: process.env.NODE_ENV === 'development' });
         this.priceHistory = new PriceHistoryManager(this.logger);
-        this.rubyBoltMonitor = new EnchantingMonitor({
-            baseItemId: 21967,  // Ruby Dragon Bolts
-            enchantedItemId: 21944,  // Ruby Dragon Bolts (e)
-            batchSize: 11000,
-            targetMargin: 75,
-            runes: [
-                { id: 564, price: 130, quantity: 1100 },  // Cosmic Runes
-                { id: 565, price: 240, quantity: 1100 }   // Blood Runes
-            ]
-        }, this.priceHistory);
-        this.diamondBoltMonitor = new EnchantingMonitor({
-            baseItemId: 21969,  // Diamond Dragon Bolts
-            enchantedItemId: 21946,  // Diamond Dragon Bolts (e)
-            batchSize: 11000,
-            targetMargin: 75,
-            runes: [
-                { id: 564, price: 130, quantity: 1100 },  // Cosmic Runes
-                { id: 563, price: 128, quantity: 2200 }   // Law Runes
-            ]
-        }, this.priceHistory);
         
         this.popupWindow = null;
         this.tray = null;
-        this.checkInterval = 60000; // Check every 1 minute
         this.lastNotificationTime = 0;
-        this.NOTIFICATION_COOLDOWN = 300000; // 5 minutes
-        
+    }
+
+    /**
+     * Initialize price monitors for different bolt types
+     */
+    initializeMonitors() {
+        this.rubyBoltMonitor = new EnchantingMonitor(BOLT_CONFIGS.ruby, this.priceHistory);
+        this.diamondBoltMonitor = new EnchantingMonitor(BOLT_CONFIGS.diamond, this.priceHistory);
+    }
+
+    /**
+     * Initialize purchase limit tracking
+     */
+    initializeLimits() {
         this.limitStorePath = path.join(app.getPath('userData'), 'limits.json');
         this.purchaseLimits = this.loadLimits() || {
-            ruby: {
-                limitReached: false,
-                resetTime: null
-            },
-            diamond: {
-                limitReached: false,
-                resetTime: null
-            }
+            ruby: { limitReached: false, resetTime: null },
+            diamond: { limitReached: false, resetTime: null }
         };
         
-        // Restore timers for existing limits
+        this.restoreLimitTimers();
+    }
+
+    /**
+     * Restore limit timers from saved state
+     */
+    restoreLimitTimers() {
         for (const [boltType, limit] of Object.entries(this.purchaseLimits)) {
             if (limit.limitReached && limit.resetTime) {
                 const remaining = limit.resetTime - Date.now();
                 if (remaining > 0) {
-                    setTimeout(() => {
-                        this.clearPurchaseLimit(boltType);
-                    }, remaining);
+                    setTimeout(() => this.clearPurchaseLimit(boltType), remaining);
                 } else {
                     this.clearPurchaseLimit(boltType);
                 }
             }
         }
-        
-        // 4 hours in milliseconds
-        this.LIMIT_COOLDOWN = 4 * 60 * 60 * 1000;
+    }
 
-        // Set up IPC listeners
+    /**
+     * Set up IPC listeners for renderer communication
+     */
+    setupIPCListeners() {
         ipcMain.on('set-purchase-limit', (event, boltType) => {
             this.setPurchaseLimit(boltType);
         });
@@ -81,28 +130,38 @@ class MenuBarApp {
         });
     }
 
+    /**
+     * Start the application
+     */
     async start() {
         try {
-            await app.whenReady();
             await this.initializeTray();
-            await this.rubyBoltMonitor.initialize();
-            await this.diamondBoltMonitor.initialize();
-            
-            // Do initial check
-            await this.checkProfitability();
-            
-            // Start periodic checks
-            setInterval(() => this.checkProfitability(), this.checkInterval);
-            
-            this.logger.info('Monitoring started');
+            this.startPriceChecking();
+            this.logger.info('Application started successfully');
         } catch (error) {
-            this.logger.error('Failed to start application', error);
-            app.quit();
+            this.logger.error('Failed to start application:', error);
+            throw error;
         }
     }
 
+    /**
+     * Start periodic price checking
+     */
+    startPriceChecking() {
+        this.checkProfitability().catch(error => 
+            this.logger.error('Initial profitability check failed:', error)
+        );
+
+        // Set up periodic checking
+        setInterval(() => {
+            this.checkProfitability().catch(error => 
+                this.logger.error('Periodic profitability check failed:', error)
+            );
+        }, INTERVALS.CHECK);
+    }
+
     async initializeTray() {
-        const trayIcon = path.join(__dirname, '..', 'assets', 'icon-default.png');
+        const trayIcon = path.join(__dirname, '..', 'assets', ICONS.DEFAULT);
         this.tray = new Tray(trayIcon);
         
         if (process.platform === 'darwin') {
@@ -110,7 +169,7 @@ class MenuBarApp {
         }
         
         this.tray.setToolTip('OSRS Bolt Monitor');
-        this.updateTray('default');
+        this.updateTray(ICONS.DEFAULT);
 
         // Handle left click for popup window
         this.tray.on('click', (event, bounds) => {
@@ -191,7 +250,7 @@ class MenuBarApp {
                 runes: this.rubyBoltMonitor.config.runes.map(rune => ({
                     quantity: Number(rune.quantity || 0),
                     price: Number(rune.price || 0),
-                    name: String(this.getRuneName(rune.id))
+                    name: RUNE_NAMES[rune.id] || 'Unknown Rune'
                 })),
                 limitReached: this.purchaseLimits.ruby.limitReached,
                 resetTime: this.purchaseLimits.ruby.resetTime
@@ -209,7 +268,7 @@ class MenuBarApp {
                 runes: this.diamondBoltMonitor.config.runes.map(rune => ({
                     quantity: Number(rune.quantity || 0),
                     price: Number(rune.price || 0),
-                    name: String(this.getRuneName(rune.id))
+                    name: RUNE_NAMES[rune.id] || 'Unknown Rune'
                 })),
                 limitReached: this.purchaseLimits.diamond.limitReached,
                 resetTime: this.purchaseLimits.diamond.resetTime
@@ -228,15 +287,6 @@ class MenuBarApp {
         }
     }
 
-    getRuneName(runeId) {
-        const runeNames = {
-            564: 'Cosmic Rune',
-            565: 'Blood Rune',
-            563: 'Law Rune'
-        };
-        return runeNames[runeId] || 'Unknown Rune';
-    }
-
     async checkProfitability() {
         try {
             const rubyProfit = await this.rubyBoltMonitor.calculateCurrentProfit();
@@ -251,14 +301,14 @@ class MenuBarApp {
                                     this.purchaseLimits.diamond.limitReached;
 
             if (bothLimitsReached) {
-                this.updateTray('limit');
+                this.updateTray(ICONS.LIMIT);
             } else {
                 // Check profitability for non-limited bolts
                 const rubyAvailable = !this.purchaseLimits.ruby.limitReached;
                 const diamondAvailable = !this.purchaseLimits.diamond.limitReached;
                 
-                const rubyProfitable = rubyAvailable && rubyProfit.profitPerItem >= this.rubyBoltMonitor.config.targetMargin;
-                const diamondProfitable = diamondAvailable && diamondProfit.profitPerItem >= this.rubyBoltMonitor.config.targetMargin;
+                const rubyProfitable = rubyAvailable && rubyProfit.profitPerItem >= BOLT_CONFIGS.ruby.targetMargin;
+                const diamondProfitable = diamondAvailable && diamondProfit.profitPerItem >= BOLT_CONFIGS.diamond.targetMargin;
                 
                 const rubyNeutral = rubyAvailable && rubyProfit.profitPerItem > 0;
                 const diamondNeutral = diamondAvailable && diamondProfit.profitPerItem > 0;
@@ -268,12 +318,22 @@ class MenuBarApp {
 
                 // Apply priority rules
                 if (rubyProfitable || diamondProfitable) {
-                    this.updateTray('profitable');
                     this.sendProfitNotification(rubyProfit, diamondProfit);
+
+                    const bestProfit = Math.max(rubyProfit.profit, diamondProfit.profit);
+                    if (bestProfit > 1500000) {
+                        this.updateTray(ICONS.PROFITHIGH);
+                    } else if (bestProfit > 750000) {
+                        this.updateTray(ICONS.PROFITMEDIUM);
+                    } else if (bestProfit > 200000) {
+                        this.updateTray(ICONS.PROFITLOW);
+                    } else {
+                        this.updateTray(ICONS.DEFAULT);
+                    }
                 } else if (rubyNeutral || diamondNeutral) {
-                    this.updateTray('default'); // neutral state
+                    this.updateTray(ICONS.DEFAULT); // neutral state
                 } else if (rubyLoss || diamondLoss) {
-                    this.updateTray('loss');
+                    this.updateTray(ICONS.LOSS);
                 }
             }
 
@@ -281,36 +341,80 @@ class MenuBarApp {
             await this.updatePopupWindow();
         } catch (error) {
             this.logger.error('Error checking profitability:', error);
-            this.updateTray('error');
+            this.updateTray(ICONS.ERROR);
         }
     }
 
+    /**
+     * Updates the tray icon and tooltip based on status
+     */
     updateTray(iconStatus) {
-        const iconName = `icon-${iconStatus}.png`;
-        this.tray.setImage(path.join(__dirname, '..', 'assets', iconName));
+        try {
+            const iconName = iconStatus || ICONS.DEFAULT;
+            const iconPath = path.join(__dirname, '..', 'assets', iconName);
+            
+            if (!fs.existsSync(iconPath)) {
+                this.logger.error(`Icon not found: ${iconPath}`);
+                this.tray.setImage(path.join(__dirname, '..', 'assets', ICONS.DEFAULT));
+                return;
+            }
+
+            this.tray.setImage(iconPath);
+            
+            // Update tooltip based on status
+            let tooltips = {}
+            tooltips[ICONS.PROFITHIGH] = '(>1.5m) Profitable enchanting opportunity!',
+            tooltips[ICONS.PROFITMEDIUM] = '(>750k) Profitable enchanting opportunity!',
+            tooltips[ICONS.PROFITLOW] = '(>200k) Profitable enchanting opportunity!',
+            tooltips[ICONS.LOSS] = 'Current prices show a loss',
+            tooltips[ICONS.LIMIT] = 'Purchase limits reached',
+            tooltips[ICONS.DEFAULT] = 'OSRS Bolt Monitor'
+
+            this.tray.setToolTip(tooltips[iconStatus] || tooltips.default);
+        } catch (error) {
+            this.logger.error('Failed to update tray:', error);
+            // Attempt to set default icon as fallback
+            try {
+                this.tray.setImage(path.join(__dirname, '..', 'assets', ICONS.DEFAULT));
+            } catch (fallbackError) {
+                this.logger.error('Failed to set fallback icon:', fallbackError);
+            }
+        }
     }
 
+    /**
+     * Sends a notification if enough time has passed since the last one
+     * @param {Object} rubyProfit Ruby bolt profit data
+     * @param {Object} diamondProfit Diamond bolt profit data
+     */
     sendProfitNotification(rubyProfit, diamondProfit) {
-        const now = Date.now();
-        if (now - this.lastNotificationTime >= this.NOTIFICATION_COOLDOWN) {
-            let message = '';
-            if (rubyProfit && rubyProfit.profitPerItem >= this.rubyBoltMonitor.config.targetMargin) {
-                message += `Ruby Bolts: ${rubyProfit.profit.toLocaleString()} GP (${rubyProfit.profitPerItem.toLocaleString()} GP/bolt)\n`;
-            }
-            if (diamondProfit && diamondProfit.profitPerItem >= this.diamondBoltMonitor.config.targetMargin) {
-                message += `Diamond Bolts: ${diamondProfit.profit.toLocaleString()} GP (${diamondProfit.profitPerItem.toLocaleString()} GP/bolt)`;
+        try {
+            const now = Date.now();
+            if (now - this.lastNotificationTime < INTERVALS.NOTIFICATION) {
+                return; // Skip if notification cooldown hasn't elapsed
             }
 
-            if (message) {
-                notifier.notify({
-                    title: 'Profitable Bolt Enchanting Opportunity!',
-                    message: message,
-                    icon: path.join(__dirname, '..', 'assets', 'icon-notification.png'),
-                    sound: true,
-                    wait: true
-                });
+            const profitableItems = [];
+            if (rubyProfit?.profitPerItem >= this.rubyBoltMonitor.config.targetMargin) {
+                profitableItems.push(`Ruby (${rubyProfit.profitPerItem.toLocaleString()}gp/bolt)`);
             }
+            if (diamondProfit?.profitPerItem >= this.diamondBoltMonitor.config.targetMargin) {
+                profitableItems.push(`Diamond (${diamondProfit.profitPerItem.toLocaleString()}gp/bolt)`);
+            }
+
+            if (profitableItems.length === 0) return;
+
+            notifier.notify({
+                title: 'Profitable Enchanting Opportunity',
+                message: `Profitable bolts: ${profitableItems.join(', ')}`,
+                icon: path.join(__dirname, '..', 'assets', ICONS.NOTIFICATION),
+                sound: true,
+                wait: true
+            });
+
             this.lastNotificationTime = now;
+        } catch (error) {
+            this.logger.error('Failed to send notification:', error);
         }
     }
 
@@ -336,7 +440,7 @@ class MenuBarApp {
 
     setPurchaseLimit(boltType) {
         this.purchaseLimits[boltType].limitReached = true;
-        this.purchaseLimits[boltType].resetTime = Date.now() + this.LIMIT_COOLDOWN;
+        this.purchaseLimits[boltType].resetTime = Date.now() + INTERVALS.LIMIT;
         
         // Save limits
         this.saveLimits();
@@ -344,7 +448,7 @@ class MenuBarApp {
         // Schedule automatic reset
         setTimeout(() => {
             this.clearPurchaseLimit(boltType);
-        }, this.LIMIT_COOLDOWN);
+        }, INTERVALS.LIMIT);
         
         // Immediately update icon and UI
         this.checkProfitability();
@@ -360,15 +464,56 @@ class MenuBarApp {
         // Update UI and icon
         this.checkProfitability();
     }
+
+    /**
+     * Cleans up resources before app quit
+     */
+    cleanup() {
+        try {
+            if (this.popupWindow) {
+                this.popupWindow.destroy();
+            }
+            if (this.priceHistory) {
+                this.priceHistory.close();
+            }
+            // Clear any existing intervals
+            clearInterval(this.priceCheckInterval);
+        } catch (error) {
+            this.logger.error('Error during cleanup:', error);
+        }
+    }
+
+    /**
+     * Handles errors that occur during price updates
+     * @param {Error} error The error that occurred
+     * @param {string} source The source of the error
+     */
+    handlePriceError(error, source) {
+        this.logger.error(`Price update error (${source}):`, error);
+        this.updateTray('default');
+        
+        if (this.popupWindow && !this.popupWindow.isDestroyed()) {
+            this.popupWindow.webContents.send('price-error', {
+                message: `Failed to update prices: ${error.message}`,
+                source
+            });
+        }
+    }
 }
 
 // Prevent multiple instances
 const menuBarApp = new MenuBarApp();
 const gotTheLock = app.requestSingleInstanceLock();
+
 if (!gotTheLock) {
     app.quit();
 } else {
-    menuBarApp.start();
+    app.whenReady().then(() => {
+        menuBarApp.start().catch(error => {
+            console.error('Failed to start application:', error);
+            app.quit();
+        });
+    });
 }
 
 // Remove or modify the window-all-closed event handler since we want the app to stay running
@@ -377,9 +522,19 @@ app.on('window-all-closed', () => {
     // Do nothing - this keeps the app running when all windows are closed
 });
 
-// Cleanup on quit
+// Set up app lifecycle handlers
 app.on('before-quit', () => {
     if (menuBarApp) {
-        menuBarApp.priceHistory.close();
+        menuBarApp.cleanup();
     }
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    app.quit();
+});
+
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled Rejection:', error);
+    app.quit();
 }); 
