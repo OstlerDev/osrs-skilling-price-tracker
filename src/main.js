@@ -233,7 +233,7 @@ class MenuBarApp {
         }
 
         this.popupWindow.show();
-        this.updatePopupWindow();
+        this.checkProfitability();
     }
 
     async updatePopupWindow() {
