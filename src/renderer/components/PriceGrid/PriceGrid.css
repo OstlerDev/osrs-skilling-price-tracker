@@ -1,0 +1,25 @@
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.price-item {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.price-label {
+  color: #999;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.price-value {
+  padding-right: 5px;
+  padding-top: 4px;
+  font-weight: 500;
+} 

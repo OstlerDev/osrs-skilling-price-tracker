@@ -1,0 +1,31 @@
+.last-updated {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  display: block;
+  position: absolute;
+  right: 10px;
+  top: -10px;
+}
+
+.last-updated span {
+  font-size: 12px;
+}
+
+.refresh-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+}
+
+.refresh-indicator.updating {
+  background: #4CAF50;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+} 

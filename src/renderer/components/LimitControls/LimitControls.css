@@ -1,0 +1,39 @@
+.limit-section {
+  display: block;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.limit-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.limit-button:hover {
+  background-color: #45a049;
+}
+
+.limit-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+}
+
+.limit-button.clear {
+  background-color: #f44336;
+}
+
+.limit-button.clear:hover {
+  background-color: #da190b;
+}
+
+.limit-timer {
+  font-size: 0.8em;
+  color: #999;
+  text-align: center;
+} 

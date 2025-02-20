@@ -1,0 +1,63 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  height: 100vh;
+  overflow: hidden;
+  padding: 16px;
+}
+
+#root {
+  height: 100%;
+}
+
+.app-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.bolt-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.error-message {
+  color: #f44336;
+  text-align: center;
+  padding: 8px;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+:root {
+  --color-profit: #4caf50;
+  --color-profit-background: rgba(52, 199, 89, 0.2);
+  --color-neutral: #ffc107;
+  --color-neutral-background: rgba(255, 204, 0, 0.2);
+  --color-loss: #f44336;
+  --color-loss-background: rgba(255, 59, 48, 0.2);
+  --color-text: #ffffff;
+  --color-background: #1e1e1e;
+  --color-border: #333333;
+}
+
+.last-updated {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.9em;
+  color: #666;
+} 

@@ -1,0 +1,69 @@
+.bolt-section {
+  background-color: var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  width: 300px;
+}
+
+.bolt-section h2 {
+  margin-bottom: 12px;
+  font-size: 1.2em;
+}
+
+.profit-info {
+  margin-bottom: 16px;
+}
+
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9em;
+}
+
+.price-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.materials {
+  font-size: 0.9em;
+  color: #999;
+  margin-bottom: 16px;
+}
+
+.bolt-section.profit {
+  border-color: var(--color-profit);
+  background-color: var(--color-profit-background);
+}
+
+.bolt-section.neutral {
+  border-color: var(--color-neutral);
+  background-color: var(--color-neutral-background);
+}
+
+.bolt-section.loss {
+  border-color: var(--color-loss);
+  background-color: var(--color-loss-background);
+}
+
+.total-profit {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.per-item {
+  font-size: 0.9em;
+  color: #999;
+  margin-bottom: 16px;
+}
+
+.bolt-section.limit-reached {
+  opacity: 0.6;
+} 

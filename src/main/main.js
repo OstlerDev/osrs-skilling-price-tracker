@@ -1,9 +1,9 @@
 const { app, Menu, Tray, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const notifier = require('node-notifier');
-const Logger = require('./Logger');
-const PriceHistoryManager = require('./PriceHistoryManager');
-const EnchantingMonitor = require('./EnchantingMonitor');
+const Logger = require('../Logger');
+const PriceHistoryManager = require('../PriceHistoryManager');
+const EnchantingMonitor = require('../EnchantingMonitor');
 const fs = require('fs');
 
 // Constants
@@ -166,7 +166,7 @@ class MenuBarApp {
     }
 
     async initializeTray() {
-        const trayIcon = path.join(__dirname, '..', 'assets', ICONS.DEFAULT);
+        const trayIcon = path.join(__dirname, '..', '..', 'assets', ICONS.DEFAULT);
         this.tray = new Tray(trayIcon);
         
         if (process.platform === 'darwin') {
@@ -210,19 +210,37 @@ class MenuBarApp {
         if (!this.popupWindow) {
             this.popupWindow = new BrowserWindow({
                 width: 635,
-                height: 360,
+                height: 365,
                 show: false,
                 frame: false,
-                fullscreenable: false,
-                resizable: false,
-                transparent: true,
                 webPreferences: {
-                    nodeIntegration: true,
-                    contextIsolation: false
+                    nodeIntegration: false,
+                    contextIsolation: true,
+                    sandbox: false,
+                    preload: path.join(__dirname, '../../dist/preload/index.js')
                 }
             });
 
-            this.popupWindow.loadFile(path.join(__dirname, 'popup.html'));
+            console.log('Using preload script at:', path.join(__dirname, '../preload/index.js'));
+
+            if (process.env.NODE_ENV === 'development') {
+                this.popupWindow.loadURL('http://localhost:5173');
+                this.popupWindow.webContents.openDevTools();
+            } else {
+                this.popupWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+            }
+
+            this.popupWindow.webContents.on('did-fail-load', (_, code, description) => {
+                console.error('Failed to load:', code, description);
+            });
+
+            this.popupWindow.webContents.on('dom-ready', () => {
+                console.log('Window DOM ready');
+            });
+
+            this.popupWindow.on('blur', () => {
+                this.popupWindow.hide();
+            });
         }
 
         // Position window next to tray icon
@@ -290,6 +308,9 @@ class MenuBarApp {
             });
         } catch (error) {
             this.logger.error('Error updating popup window:', error);
+            if (this.popupWindow && !this.popupWindow.isDestroyed()) {
+                this.popupWindow.webContents.send('error', error.message);
+            }
         }
     }
 
@@ -363,11 +384,11 @@ class MenuBarApp {
     updateTray(iconStatus) {
         try {
             const iconName = iconStatus || ICONS.DEFAULT;
-            const iconPath = path.join(__dirname, '..', 'assets', iconName);
+            const iconPath = path.join(__dirname, '..', '..', 'assets', iconName);
             
             if (!fs.existsSync(iconPath)) {
                 this.logger.error(`Icon not found: ${iconPath}`);
-                this.tray.setImage(path.join(__dirname, '..', 'assets', ICONS.DEFAULT));
+                this.tray.setImage(path.join(__dirname, '..', '..', 'assets', ICONS.DEFAULT));
                 return;
             }
 
@@ -387,7 +408,7 @@ class MenuBarApp {
             this.logger.error('Failed to update tray:', error);
             // Attempt to set default icon as fallback
             try {
-                this.tray.setImage(path.join(__dirname, '..', 'assets', ICONS.DEFAULT));
+                this.tray.setImage(path.join(__dirname, '..', '..', 'assets', ICONS.DEFAULT));
             } catch (fallbackError) {
                 this.logger.error('Failed to set fallback icon:', fallbackError);
             }
@@ -416,10 +437,12 @@ class MenuBarApp {
 
             if (profitableItems.length === 0) return;
 
+            this.logger.info(`Sending notification: ${profitableItems.join(', ')}`);
+
             notifier.notify({
                 title: 'Profitable Enchanting Opportunity',
                 message: `Profitable bolts: ${profitableItems.join(', ')}`,
-                icon: path.join(__dirname, '..', 'assets', ICONS.NOTIFICATION),
+                icon: path.join(__dirname, '..', '..', 'assets', ICONS.NOTIFICATION),
                 sound: true,
                 wait: true
             });
