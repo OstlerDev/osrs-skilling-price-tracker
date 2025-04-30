@@ -1,0 +1,74 @@
+.price-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(26, 26, 26, 0.5);
+}
+
+.price-summary-table th {
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 0.8em;
+  font-weight: 500;
+  color: #aaa;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.price-summary-table th:first-child {
+  text-align: left;
+  padding-left: 12px;
+}
+
+.price-summary-table td {
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.price-summary-table td:first-child {
+  text-align: left;
+  padding-left: 12px;
+  font-weight: 500;
+}
+
+.price-summary-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.price-summary-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Clickable row styles */
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.clickable-row:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.item-name-with-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-icon {
+  font-size: 0.8em;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.clickable-row:hover .link-icon {
+  opacity: 0.8;
+}
+
+/* Remove the after content since we're using explicit link icons */
+.clickable-row:hover::after {
+  content: none;
+} 

@@ -1,0 +1,138 @@
+/* BoltCard - Main container */
+.bolt-card {
+  background-color: var(--color-border);
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  width: 360px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Card header */
+.bolt-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.bolt-card-header h2 {
+  margin: 0;
+  font-size: 1.3em;
+  font-weight: 600;
+}
+
+.info-icon {
+  cursor: pointer;
+  font-size: 1.2em;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.info-icon:hover {
+  opacity: 1;
+}
+
+/* Recommendation banner */
+.recommendation-banner {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-left: 3px solid var(--color-profit);
+}
+
+.star-icon {
+  font-size: 1.1em;
+}
+
+.recommendation-text {
+  font-weight: 500;
+  font-size: 0.95em;
+}
+
+/* Card content */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Section styling */
+.section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px 0;
+  font-size: 0.9em;
+  color: #aaa;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.section-icon {
+  font-size: 1.2em;
+}
+
+/* Placeholder content for future implementation */
+.placeholder-content {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+  color: #777;
+  font-size: 0.9em;
+}
+
+/* Materials section */
+.materials-content {
+  font-size: 0.95em;
+  padding: 6px 0;
+}
+
+/* Limit controls container */
+.limit-controls-container {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+/* State-based styles */
+.bolt-card.profit {
+  border-color: var(--color-profit);
+  background-color: var(--color-profit-background);
+}
+
+.bolt-card.neutral {
+  border-color: var(--color-neutral);
+  background-color: var(--color-neutral-background);
+}
+
+.bolt-card.loss {
+  border-color: var(--color-loss);
+  background-color: var(--color-loss-background);
+}
+
+.bolt-card.limit-reached {
+  opacity: 0.7;
+}
+
+/* Loading state */
+.calculating-message {
+  text-align: center;
+  padding: 20px 0;
+  color: #999;
+  font-style: italic;
+} 

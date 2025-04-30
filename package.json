@@ -2,12 +2,13 @@
   "name": "osrs-bolt-monitor",
   "version": "1.0.0",
   "description": "",
-  "main": "src/main/main.js",
+  "main": "dist/main/main.js",
   "scripts": {
-    "start": "electron-vite dev",
-    "build": "electron-vite build",
+    "start": "rimraf dist && npm run build && tsc && electron-vite dev",
+    "build": "rimraf dist && tsc && electron-vite build",
     "lint": "eslint . --ext ts,tsx",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "dev": "rimraf dist && tsc && electron-vite dev --watch"
   },
   "author": "Sky Young",
   "license": "ISC",
@@ -29,6 +30,7 @@
     "electron-vite": "^2.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.33.2",
+    "rimraf": "^6.0.1",
     "typescript": "^5.3.3",
     "vite": "^5.1.4"
   }

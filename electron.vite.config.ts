@@ -9,6 +9,10 @@ export default defineConfig({
       rollupOptions: {
         external: ['sqlite3', 'node-notifier']
       }
+    },
+    publicDir: 'src/assets',
+    resolve: {
+      extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
     }
   },
   preload: {
@@ -17,9 +21,11 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/preload/index.ts')
-        },
-        external: ['electron']
+        }
       }
+    },
+    resolve: {
+      extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
     }
   },
   renderer: {
@@ -29,9 +35,7 @@ export default defineConfig({
     },
     plugins: [react()],
     resolve: {
-      alias: {
-        '@': '/src'
-      }
+      extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
     }
   }
 }); 

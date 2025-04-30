@@ -1,4 +1,10 @@
-class ItemRegistry {
+interface ItemDictionary {
+    [key: number]: string;
+}
+
+export class ItemRegistry {
+    private items: ItemDictionary;
+
     constructor() {
         this.items = {
             21967: "Ruby Dragon Bolts",
@@ -11,17 +17,15 @@ class ItemRegistry {
         };
     }
 
-    getItem(id) {
+    getItem(id: number): string | undefined {
         return this.items[id];
     }
 
-    getName(id) {
+    getName(id: number): string {
         return this.items[id] || `Unknown Item (${id})`;
     }
 
-    getShortName(id) {
-        return this.items[id]?.shortName || this.getName(id);
+    getShortName(id: number): string {
+        return this.items[id] || this.getName(id);
     }
-}
-
-module.exports = ItemRegistry; 
+} 

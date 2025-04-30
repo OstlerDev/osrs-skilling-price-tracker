@@ -1,39 +1,38 @@
 import React from 'react';
+import { formatGP } from '../../../shared/utils';
+import { PricePoint } from '../../../shared/types';
 import './PriceGrid.css';
 
 interface PriceGridProps {
-  baseBoltPrice: number;
-  enchantedBoltPrice: number;
-  latestBuyPrice: number;
-  latestSellPrice: number;
+  baseBoltPrices: PricePoint;
+  enchantedBoltPrices: PricePoint;
 }
 
 export const PriceGrid: React.FC<PriceGridProps> = ({
-  baseBoltPrice,
-  enchantedBoltPrice,
-  latestBuyPrice,
-  latestSellPrice
+  baseBoltPrices,
+  enchantedBoltPrices
 }) => {
-  const formatGP = (number: number) => `${number.toLocaleString()}`;
-
   return (
-    <div className="price-grid">
-      <div className="price-item">
-        <div className="price-label">Base Bolts</div>
-        <div className="price-value">{formatGP(baseBoltPrice)}</div>
-      </div>
-      <div className="price-item">
-        <div className="price-label">Enchanted Bolts</div>
-        <div className="price-value">{formatGP(enchantedBoltPrice)}</div>
-      </div>
-      <div className="price-item">
-        <div className="price-label">Latest Instant Buy</div>
-        <div className="price-value">{formatGP(latestBuyPrice)}</div>
-      </div>
-      <div className="price-item">
-        <div className="price-label">Latest Instant Sell</div>
-        <div className="price-value">{formatGP(latestSellPrice)}</div>
-      </div>
-    </div>
+    <table className="price-table">
+      <thead>
+        <tr>
+          <th>Item Type</th>
+          <th>Buy Price</th>
+          <th>Sell Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Base Bolts</td>
+          <td>{formatGP(baseBoltPrices.avgLowPrice)}</td>
+          <td>{formatGP(baseBoltPrices.avgHighPrice)}</td>
+        </tr>
+        <tr>
+          <td>Enchanted Bolts</td>
+          <td>{formatGP(enchantedBoltPrices.avgLowPrice)}</td>
+          <td>{formatGP(enchantedBoltPrices.avgHighPrice)}</td>
+        </tr>
+      </tbody>
+    </table>
   );
 }; 

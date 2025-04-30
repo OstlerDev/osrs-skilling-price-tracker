@@ -1,24 +1,31 @@
 import React from 'react';
 import { PriceGrid } from '../PriceGrid/PriceGrid';
 import { LimitControls } from '../LimitControls/LimitControls';
-import { BoltType, ProfitData } from '../../../shared/types';
+import { BoltType, EnhancedProfitData } from '../../../shared/types';
 import './BoltSection.css';
 
 interface BoltSectionProps {
   type: BoltType;
-  profitData?: ProfitData;
+  profitData?: EnhancedProfitData;
   targetMargin: number;
   onSetLimit: (type: BoltType) => void;
   onClearLimit: (type: BoltType) => void;
 }
 
-export const BoltSection: React.FC<BoltSectionProps> = ({ type, profitData, targetMargin, onSetLimit, onClearLimit }) => {
+export const BoltSection: React.FC<BoltSectionProps> = ({ 
+  type, 
+  profitData, 
+  targetMargin,
+  onSetLimit,
+  onClearLimit 
+}) => {
   const title = type === 'ruby' ? 'Ruby Dragon Bolts' : 'Diamond Dragon Bolts';
   
   const getProfitClass = () => {
     if (!profitData) return '';
-    if (profitData.profitPerItem >= targetMargin) return 'profit';
-    if (profitData.profitPerItem > 0) return 'neutral';
+    // Use median profit for coloring
+    if (profitData.medianProfit.profitPerItem >= targetMargin) return 'profit';
+    if (profitData.medianProfit.profitPerItem > 0) return 'neutral';
     return 'loss';
   };
 
@@ -29,18 +36,42 @@ export const BoltSection: React.FC<BoltSectionProps> = ({ type, profitData, targ
       <h2>{title}</h2>
       {profitData ? (
         <>
-          <div className="profit-info total-profit">
-            Profit: {formatGP(profitData.profit)}
+          <div className="profit-sections">
+            
+            <div className="profit-section slow">
+              <h3>Slow Profit</h3>
+              <div className="profit-info">
+                Total: {formatGP(profitData.slowProfit.profit)}
+              </div>
+              <div className="profit-info">
+                Per bolt: {formatGP(profitData.slowProfit.profitPerItem)}
+              </div>
+            </div>
+
+            <div className="profit-section median">
+              <h3>Median Profit</h3>
+              <div className="profit-info">
+                Total: {formatGP(profitData.medianProfit.profit)}
+              </div>
+              <div className="profit-info">
+                Per bolt: {formatGP(profitData.medianProfit.profitPerItem)}
+              </div>
+            </div>
           </div>
-          <div className="profit-info per-item">
-            Profit per bolt: {formatGP(profitData.profitPerItem)}
+
+          <div className="profit-section instant">
+            <h3>Instant Profit</h3>
+            <div className="profit-info">
+              Total: {formatGP(profitData.instantProfit.profit)}
+            </div>
+            <div className="profit-info">
+              Per bolt: {formatGP(profitData.instantProfit.profitPerItem)}
+            </div>
           </div>
           
           <PriceGrid
-            baseBoltPrice={profitData.baseBoltPrice}
-            enchantedBoltPrice={profitData.enchantedBoltPrice}
-            latestBuyPrice={profitData.latestBuyPrice}
-            latestSellPrice={profitData.latestSellPrice}
+            baseBoltPrices={profitData.baseBoltPrices}
+            enchantedBoltPrices={profitData.enchantedBoltPrices}
           />
 
           <div className="materials">

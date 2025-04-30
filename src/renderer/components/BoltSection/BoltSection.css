@@ -7,34 +7,72 @@
 }
 
 .bolt-section h2 {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   font-size: 1.2em;
 }
 
-.profit-info {
+.profit-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 16px;
+}
+
+.profit-section {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.profit-section h3 {
+  font-size: 0.9em;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.profit-section .profit-info {
+  font-size: 0.9em;
+  margin: 2px 0;
+}
+
+.profit-section .profit-info:first-of-type {
+  font-weight: bold;
 }
 
 .price-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.price-section h3 {
   font-size: 0.9em;
+  color: #999;
+  margin-bottom: 8px;
 }
 
 .price-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 8px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 8px;
   border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.price-label {
+  font-size: 0.8em;
+  color: #999;
+}
+
+.price-value {
+  font-size: 0.9em;
+  font-weight: 500;
 }
 
 .materials {
   font-size: 0.9em;
   color: #999;
-  margin-bottom: 16px;
+  margin: 16px 0;
 }
 
 .bolt-section.profit {

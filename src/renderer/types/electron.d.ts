@@ -1,4 +1,4 @@
-import { BoltType, ProfitData } from '../../shared/types';
+import { BoltType, EnhancedProfitData } from '../../shared/types';
 
 export {};
 
@@ -8,8 +8,8 @@ declare global {
       setLimit: (type: BoltType) => void;
       clearLimit: (type: BoltType) => void;
       onProfitUpdate: (callback: (data: { 
-        rubyProfit: ProfitData | null; 
-        diamondProfit: ProfitData | null; 
+        rubyProfit: EnhancedProfitData | null; 
+        diamondProfit: EnhancedProfitData | null; 
         lastUpdateTime: number 
       }) => void) => void;
       onUpdatingPrices: (callback: () => void) => void;

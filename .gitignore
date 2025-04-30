@@ -2,3 +2,7 @@ node_modules
 *.db
 .DS_Store
 dist/*
+.DS_Store
+*.log
+*.db-shm
+*.db-wal

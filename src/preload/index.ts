@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { BoltType, ProfitData } from '../shared/types';
+import { BoltType, ProfitData, EnhancedProfitData } from '../shared/types';
 import { IPC_CHANNELS } from '../shared/ipc';
 
 console.log('Preload script starting...');
@@ -9,8 +9,8 @@ try {
         setLimit: (type: BoltType) => ipcRenderer.send(IPC_CHANNELS.SET_PURCHASE_LIMIT, type),
         clearLimit: (type: BoltType) => ipcRenderer.send(IPC_CHANNELS.CLEAR_PURCHASE_LIMIT, type),
         onProfitUpdate: (callback: (data: { 
-            rubyProfit: ProfitData | null; 
-            diamondProfit: ProfitData | null; 
+            rubyProfit: EnhancedProfitData | null; 
+            diamondProfit: EnhancedProfitData | null; 
             lastUpdateTime: number 
         }) => void) => {
             ipcRenderer.on('update-profits', (_event, data) => callback(data));

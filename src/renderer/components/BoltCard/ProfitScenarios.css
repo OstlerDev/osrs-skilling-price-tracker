@@ -1,0 +1,58 @@
+.profit-scenarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(26, 26, 26, 0.5);
+}
+
+.profit-scenarios-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.8em;
+  font-weight: 500;
+  color: #aaa;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profit-scenarios-table td {
+  padding: 10px 12px;
+}
+
+.strategy-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.strategy-icon {
+  font-size: 1.1em;
+}
+
+.strategy-name {
+  font-weight: 500;
+}
+
+.per-bolt-cell, .total-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.total-cell {
+  font-weight: 500;
+}
+
+.scenario-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.scenario-row.negative {
+  color: #ff6b6b;
+}
+
+.scenario-row.negative .per-bolt-cell,
+.scenario-row.negative .total-cell {
+  color: #ff6b6b;
+} 

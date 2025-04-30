@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { BoltType, ProfitData } from '../../shared/types';
+import { BoltType, ProfitData, EnhancedProfitData } from '../../shared/types';
 
 interface BoltDataState {
-  rubyProfit: ProfitData | null;
-  diamondProfit: ProfitData | null;
+  rubyProfit: EnhancedProfitData | null;
+  diamondProfit: EnhancedProfitData | null;
   lastUpdateTime: number | null;
   isUpdating: boolean;
   error: string | null;
@@ -26,8 +26,8 @@ export function useBoltData() {
     }
 
     const handleProfitUpdate = (data: {
-      rubyProfit: ProfitData | null;
-      diamondProfit: ProfitData | null;
+      rubyProfit: EnhancedProfitData | null;
+      diamondProfit: EnhancedProfitData | null;
       lastUpdateTime: number;
     }) => {
       setState(prev => ({
