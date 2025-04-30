@@ -35,4 +35,8 @@ export const ITEM_NAMES: { [key: number]: string } = {
     564: "Cosmic Rune",
     565: "Blood Rune",
     563: 'Law Rune'
-} as const; 
+} as const;
+
+// Grand Exchange Tax Constants
+export const GE_TAX_RATE = 0.01; // 1% tax
+export const GE_TAX_THRESHOLD = 100; // Only items above 100gp are taxed 

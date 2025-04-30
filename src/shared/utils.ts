@@ -1,6 +1,6 @@
 import { EnhancedProfitData } from "./types";
-
 import { BoltPrices } from "./types";
+import { GE_TAX_RATE, GE_TAX_THRESHOLD } from "./constants";
 
 interface ProfitCalculation {
   profit: number;
@@ -33,7 +33,14 @@ export const calculateProfit = (
   runesCost: number
 ): ProfitCalculation => {
   const totalBuyCost = buyPrice * batchSize;
-  const totalSellValue = sellPrice * batchSize;
+  let totalSellValue = sellPrice * batchSize;
+  
+  // Apply 1% GE tax if item price is over 100gp
+  if (sellPrice > GE_TAX_THRESHOLD) {
+    const taxAmount = totalSellValue * GE_TAX_RATE;
+    totalSellValue -= taxAmount;
+  }
+  
   const profit = totalSellValue - totalBuyCost - runesCost;
   const profitPerItem = profit / batchSize;
 
