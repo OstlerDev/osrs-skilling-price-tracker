@@ -3,7 +3,8 @@ export type BoltType = 'ruby' | 'diamond';
 export interface RuneInfo {
   id: number;
   quantity: number;
-  price: number;
+  defaultPrice: number;
+  price: number; // This will be the actual dynamic price
   name: string;
 }
 

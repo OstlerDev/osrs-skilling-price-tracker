@@ -11,8 +11,8 @@ export const BOLT_CONFIGS = {
         BOLT_BATCH_SIZE: 11000,
         targetMargin: 75,
         runes: [
-            { id: 564, price: 130, quantity: 1100 },  // Cosmic Runes
-            { id: 565, price: 240, quantity: 1100 }   // Blood Runes
+            { id: 564, quantity: 1100, defaultPrice: 130 },  // Cosmic Runes
+            { id: 565, quantity: 1100, defaultPrice: 240 }   // Blood Runes
         ]
     },
     diamond: {
@@ -21,8 +21,8 @@ export const BOLT_CONFIGS = {
         BOLT_BATCH_SIZE: 11000,
         targetMargin: 75,
         runes: [
-            { id: 564, price: 130, quantity: 1100 },  // Cosmic Runes
-            { id: 563, price: 128, quantity: 2200 }   // Law Runes
+            { id: 564, quantity: 1100, defaultPrice: 130 },  // Cosmic Runes
+            { id: 563, quantity: 2200, defaultPrice: 128 }   // Law Runes
         ]
     }
 } as const;

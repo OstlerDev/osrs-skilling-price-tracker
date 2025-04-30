@@ -78,6 +78,7 @@ export const BoltSection: React.FC<BoltSectionProps> = ({
             Materials: {profitData.runes.map(rune => 
               `${rune.quantity}x ${rune.name} (${formatGP(rune.price)})`
             ).join(', ')}
+            <span className="price-note"> - using live prices</span>
           </div>
 
           <LimitControls

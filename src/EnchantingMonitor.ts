@@ -13,8 +13,8 @@ interface EnchantingConfig {
     readonly targetMargin: number;
     readonly runes: ReadonlyArray<{
         readonly id: number;
-        readonly price: number;
         readonly quantity: number;
+        readonly defaultPrice: number;
     }>;
 }
 
@@ -24,6 +24,7 @@ export class EnchantingMonitor {
     private trackers: {
         baseItem: ItemPriceTracker;
         enchantedItem: ItemPriceTracker;
+        runes: Map<number, ItemPriceTracker>;
     };
     public lastProfit: EnhancedProfitData | null = null;
 
@@ -34,17 +35,38 @@ export class EnchantingMonitor {
         const baseItemHistory = new PriceHistoryManager(config.baseItemId, logger);
         const enchantedItemHistory = new PriceHistoryManager(config.enchantedItemId, logger);
         
+        // Create a map to store rune trackers
+        const runeTrackers = new Map<number, ItemPriceTracker>();
+        
         this.trackers = {
             baseItem: new ItemPriceTracker(config.baseItemId, baseItemHistory, logger),
-            enchantedItem: new ItemPriceTracker(config.enchantedItemId, enchantedItemHistory, logger)
+            enchantedItem: new ItemPriceTracker(config.enchantedItemId, enchantedItemHistory, logger),
+            runes: runeTrackers
         };
+        
+        // Initialize rune trackers
+        config.runes.forEach(rune => {
+            const runeHistory = new PriceHistoryManager(rune.id, logger);
+            runeTrackers.set(rune.id, new ItemPriceTracker(rune.id, runeHistory, logger));
+        });
     }
 
     async initialize(): Promise<void> {
-        await Promise.all([
+        // Initialize bolt trackers
+        const initPromises = [
             this.trackers.baseItem.initialize(),
             this.trackers.enchantedItem.initialize()
-        ]);
+        ];
+        
+        // Initialize rune trackers
+        this.config.runes.forEach(rune => {
+            const runeTracker = this.trackers.runes.get(rune.id);
+            if (runeTracker) {
+                initPromises.push(runeTracker.initialize());
+            }
+        });
+        
+        await Promise.all(initPromises);
     }
 
     async calculateCurrentProfit(): Promise<EnhancedProfitData | null> {
@@ -69,8 +91,43 @@ export class EnchantingMonitor {
             }
         };
 
-        const runesCost = this.config.runes.reduce((total, rune) => 
-            total + (rune.price * rune.quantity), 0);
+        // Update rune prices and calculate total rune cost
+        const runeInfos: RuneInfo[] = [];
+        let runesCost = 0;
+        
+        // Create an array of promises for rune price updates
+        const runeUpdatePromises = this.config.runes.map(async rune => {
+            const runeTracker = this.trackers.runes.get(rune.id);
+            let runePrice = rune.defaultPrice; // Default fallback price
+            
+            if (runeTracker) {
+                try {
+                    const priceData = await runeTracker.updatePrice();
+                    if (priceData && priceData.avgHighPrice > 0) {
+                        // Use high price for runes (instant buy)
+                        runePrice = priceData.avgHighPrice;
+                    }
+                } catch (error) {
+                    this.logger.error(`Failed to update price for rune ${rune.id}`, error);
+                }
+            }
+            
+            // Calculate cost for this rune
+            const runeCost = runePrice * rune.quantity;
+            runesCost += runeCost;
+            
+            // Add rune info to array
+            runeInfos.push({
+                id: rune.id,
+                quantity: rune.quantity,
+                defaultPrice: rune.defaultPrice,
+                price: runePrice,
+                name: RUNE_NAMES[rune.id] || 'Unknown Rune'
+            });
+        });
+        
+        // Wait for all rune price updates to complete
+        await Promise.all(runeUpdatePromises);
 
         const profitData = calculateEnhancedProfit(
             prices,
@@ -79,12 +136,7 @@ export class EnchantingMonitor {
         );
 
         // Add rune information
-        profitData.runes = this.config.runes.map(rune => ({
-            id: rune.id,
-            quantity: Number(rune.quantity || 0),
-            price: Number(rune.price || 0),
-            name: RUNE_NAMES[rune.id] || 'Unknown Rune'
-        }));
+        profitData.runes = runeInfos;
 
         this.lastProfit = profitData;
         this.logProfitCalculation(baseItem, enchantedItem, profitData);
@@ -101,6 +153,12 @@ export class EnchantingMonitor {
                 avgHigh: enchantedItem.avgHighPrice,
                 avgLow: enchantedItem.avgLowPrice
             },
+            runes: profitData.runes.map(rune => ({
+                id: rune.id,
+                name: rune.name,
+                price: rune.price,
+                quantity: rune.quantity
+            })),
             instantProfit: profitData.instantProfit,
             slowProfit: profitData.slowProfit,
             medianProfit: profitData.medianProfit
