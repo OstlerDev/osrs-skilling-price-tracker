@@ -17,20 +17,20 @@ export const PriceGrid: React.FC<PriceGridProps> = ({
       <thead>
         <tr>
           <th>Item Type</th>
-          <th>Buy Price</th>
-          <th>Sell Price</th>
+          <th>Instant Buy Price</th>
+          <th>Instant Sell Price</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>Base Bolts</td>
-          <td>{formatGP(baseBoltPrices.avgLowPrice)}</td>
           <td>{formatGP(baseBoltPrices.avgHighPrice)}</td>
+          <td>{formatGP(baseBoltPrices.avgLowPrice)}</td>
         </tr>
         <tr>
           <td>Enchanted Bolts</td>
-          <td>{formatGP(enchantedBoltPrices.avgLowPrice)}</td>
           <td>{formatGP(enchantedBoltPrices.avgHighPrice)}</td>
+          <td>{formatGP(enchantedBoltPrices.avgLowPrice)}</td>
         </tr>
       </tbody>
     </table>

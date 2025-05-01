@@ -62,7 +62,7 @@ export const BoltCard: React.FC<BoltCardProps> = ({
         <h2>{title}</h2>
         <span 
           className="info-icon" 
-          title="SLOW BUY: Higher price but slower transactions. INSTANT BUY: Lower price but immediate transactions. Click on any item row to view its price history."
+          title="SLOW BUY: Higher price but slower transactions. INSTANT BUY: Lower price but immediate transactions. GE Tax: 1% on sales for items over 100gp. Click on any item row to view its price history."
         >
           ℹ️
         </span>

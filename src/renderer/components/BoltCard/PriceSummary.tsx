@@ -48,8 +48,8 @@ export const PriceSummary: React.FC<PriceSummaryProps> = ({
               <span className="link-icon">🔗</span>
             </div>
           </td>
-          <td>{formatGP(baseBoltPrices.avgHighPrice)}</td>
           <td>{formatGP(baseBoltPrices.avgLowPrice)}</td>
+          <td>{formatGP(baseBoltPrices.avgHighPrice)}</td>
         </tr>
         <tr 
           className="clickable-row"
@@ -62,8 +62,8 @@ export const PriceSummary: React.FC<PriceSummaryProps> = ({
               <span className="link-icon">🔗</span>
             </div>
           </td>
-          <td>{formatGP(enchantedBoltPrices.avgHighPrice)}</td>
           <td>{formatGP(enchantedBoltPrices.avgLowPrice)}</td>
+          <td>{formatGP(enchantedBoltPrices.avgHighPrice)}</td>
         </tr>
       </tbody>
     </table>
