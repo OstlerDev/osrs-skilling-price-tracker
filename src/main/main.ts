@@ -103,6 +103,10 @@ class MenuBarApp {
         await ElectronApp.whenReady();
         this.createTray();
         this.setupIPCListeners();
+        
+        // Check for any expired limits on startup
+        this.checkAndClearExpiredLimits();
+        
         this.startPriceChecking();
     }
 
@@ -231,6 +235,9 @@ class MenuBarApp {
             // this.popupWindow?.hide();
         }
 
+        // Check for expired limits and clear them
+        this.checkAndClearExpiredLimits();
+
         try {
             this.popupWindow?.webContents.send('updating-prices');
 
@@ -262,6 +269,27 @@ class MenuBarApp {
             if (this.popupWindow && !this.popupWindow.isDestroyed()) {
                 this.popupWindow.webContents.send('error', error.message);
             }
+        }
+    }
+
+    // Helper method to check and clear expired limits
+    private checkAndClearExpiredLimits(): void {
+        const now = Date.now();
+        
+        // Check ruby limit
+        if (this.purchaseLimits.ruby.limitReached && 
+            this.purchaseLimits.ruby.resetTime && 
+            this.purchaseLimits.ruby.resetTime <= now) {
+            this.logger.info('Ruby purchase limit expired, automatically clearing');
+            this.clearPurchaseLimit('ruby');
+        }
+        
+        // Check diamond limit
+        if (this.purchaseLimits.diamond.limitReached && 
+            this.purchaseLimits.diamond.resetTime && 
+            this.purchaseLimits.diamond.resetTime <= now) {
+            this.logger.info('Diamond purchase limit expired, automatically clearing');
+            this.clearPurchaseLimit('diamond');
         }
     }
 
