@@ -9,6 +9,11 @@ import { BoltType, EnhancedProfitData } from '../shared/types';
 import { IPC_CHANNELS } from '../shared/ipc';
 import fs from 'fs';
 
+// Hide dock icon on macOS
+if (process.platform === 'darwin') {
+    ElectronApp.dock.hide();
+}
+
 const logger = new Logger();
 
 type IconTypes = {
